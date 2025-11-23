@@ -1,0 +1,12 @@
+{
+	"scripts": {
+		"dev": "npm run build -- --sourcemap=inline --watch",
+		"build": "esbuild js/widget.ts --minify --format=esm --bundle --outdir=src/db_schema_viz/static",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@anywidget/types": "^0.2.0",
+		"esbuild": "^0.25.4",
+		"typescript": "^5.8.3"
+	}
+}
