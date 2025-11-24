@@ -1,5 +1,8 @@
 import { defineConfig } from "rolldown";
 import svelte from "rollup-plugin-svelte";
+import postcss from "rollup-plugin-postcss";
+import tailwindcss from "@tailwindcss/postcss";
+import { sveltePreprocess } from "svelte-preprocess";
 
 export default defineConfig({
   input: "./web/index.js",
@@ -7,6 +10,13 @@ export default defineConfig({
     dir: "./src/db_schema_viz/static/",
   },
   plugins: [
-    svelte({ compilerOptions: { runes: true } }),
+    postcss({
+      extract: true,
+      plugins: [tailwindcss()],
+    }),
+    svelte({
+      preprocess: sveltePreprocess(),
+      compilerOptions: { runes: true }
+    }),
   ],
 });

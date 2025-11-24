@@ -1,25 +1,11 @@
 <script>
+  // import CSS file w/ tailwind directive; without this the tailwind CSS classes won't be processed and no styles will be applied
+  import "./widget.css";
+
   /** @type {{ bindings: { value: number }}*/
   let { bindings } = $props();
 </script>
 
-<button onclick={() => bindings.value++}>Count is {bindings.value}</button>
-
-<style>
-  button {
-    background: #ad1a1a;
-    border-radius: 10px;
-    border: 0;
-    color: white;
-    cursor: pointer;
-    font-family: "Roboto", sans-serif;
-    font-size: 2em;
-    margin: 10px;
-    padding: 10px 20px;
-    transition: transform 0.25s ease-in-out;
-  }
-
-  button:hover {
-    transform: scale(1.05);
-  }
-</style>
+<button class="bg-gray-500 p-2 rounded-md" onclick={() => bindings.value++}
+  >Count is {bindings.value}</button
+>
