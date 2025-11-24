@@ -7,7 +7,7 @@
 
 <style>
   button {
-    background: #aaa;
+    background: #ad1a1a;
     border-radius: 10px;
     border: 0;
     color: white;
