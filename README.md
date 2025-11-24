@@ -34,16 +34,16 @@ The widget front-end code bundles it's JavaScript dependencies. After setting up
 make sure to install these dependencies locally:
 
 ```sh
-npm install
+pnpm install
 ```
 
 While developing, you can run the following in a separate terminal to automatically
 rebuild JavaScript as you make changes:
 
 ```sh
-npm run dev
+pnpm run dev
 ```
 
-Open `example.ipynb` in JupyterLab, VS Code, or your favorite editor
-to start developing. Changes made in `js/` will be reflected
+Open `notebooks/example.ipynb` in JupyterLab, VS Code, or your favorite editor
+to start developing. Changes made in `web/` will be reflected
 in the notebook.
