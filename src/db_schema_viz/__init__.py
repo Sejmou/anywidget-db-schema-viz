@@ -11,6 +11,6 @@ except importlib.metadata.PackageNotFoundError:
 
 
 class DBSchemaVizWidget(anywidget.AnyWidget):
-    _esm = pathlib.Path(__file__).parent / "static" / "widget.js"
-    _css = pathlib.Path(__file__).parent / "static" / "widget.css"
+    _esm = pathlib.Path(__file__).parent / "static" / "index.js"
+    _css = pathlib.Path(__file__).parent / "static" / "index.css"
     value = traitlets.Int(0).tag(sync=True)

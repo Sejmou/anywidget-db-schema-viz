@@ -1,12 +1,18 @@
 {
+	"type": "module",
 	"scripts": {
-		"dev": "npm run build -- --sourcemap=inline --watch",
-		"build": "esbuild js/widget.ts --minify --format=esm --bundle --outdir=src/db_schema_viz/static",
+		"dev": "rolldown --watch --sourcemap=inline -c",
+		"build": "rolldown -c",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@anywidget/types": "^0.2.0",
-		"esbuild": "^0.25.4",
+		"rolldown": "1.0.0-beta.51",
+		"rollup-plugin-svelte": "^7.2.3",
+		"svelte": "^5.43.14",
 		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"@anywidget/svelte": "^0.1.0"
 	}
 }
