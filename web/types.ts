@@ -9,3 +9,10 @@ export type Entity = {
     name: string;
     attributes: Array<Attribute>;
 };
+
+export type EntityWithRenderingState = Entity & {
+    x: number;
+    y: number;
+    layer: number;
+    expanded: boolean;
+};

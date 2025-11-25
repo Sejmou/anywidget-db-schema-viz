@@ -1,48 +1,34 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { formatDatatype } from "./utils.js";
-  interface Entity {
-    name: string;
-    attributes: Array<{
-      name: string;
-      datatype: string;
-      primary_key?: boolean;
-      foreign_key?: { entity: string; attribute: string };
-    }>;
-  }
+  import type { EntityWithRenderingState } from "./types";
+
   interface Props {
-    entity: Entity;
-    x: number;
-    y: number;
-    layer: number;
+    entity: EntityWithRenderingState;
     showDatatypes: boolean;
     truncateLength: number;
     onDragStart: (event: MouseEvent) => void;
     onDrag: (event: MouseEvent) => void;
     onDragEnd: () => void;
     onClick: (event: MouseEvent) => void;
+    onToggleExpand: (event: MouseEvent) => void;
   }
   let {
     entity,
-    x,
-    y,
-    layer = 0,
     showDatatypes = true,
     truncateLength = 30,
     onDragStart,
     onDrag,
     onDragEnd,
     onClick,
+    onToggleExpand,
   }: Props = $props();
   let expandedAttrs = $state(new Set());
-  let isEntityExpanded = $state(true);
 
-  function toggleEntityExpand(event: MouseEvent) {
-    event.stopPropagation();
-    isEntityExpanded = !isEntityExpanded;
-  }
-
-  $inspect({ name: entity.name, isEntityExpanded });
+  $inspect({
+    name: entity.name,
+    expanded: entity.expanded,
+    layer: entity.layer,
+  });
 
   /**
    * @param {number} index
@@ -70,13 +56,14 @@
 
 <div
   class="absolute cursor-move bg-white border-2 border-gray-800 rounded-lg shadow-lg min-w-[200px] select-none active:cursor-grabbing focus:outline-none"
-  style="left: {x}px; top: {y}px; z-index: {layer > 0 ? layer : 10};"
+  style="left: {entity.x}px; top: {entity.y}px; z-index: {entity.layer};"
   onmousedown={(e) => {
     e.preventDefault();
     onDragStart(e);
   }}
   onclick={(e) => {
     onClick(e);
+    e.stopPropagation();
   }}
   onkeydown={(e) => {
     // TODO: implement keyboard navigation
@@ -92,16 +79,16 @@
     <span>{entity.name}</span>
     <button
       class="text-white hover:text-gray-200 text-sm underline cursor-pointer shrink-0 ml-2"
-      onclick={(e) => toggleEntityExpand(e)}
+      onclick={(e) => onToggleExpand(e)}
       type="button"
-      aria-label={isEntityExpanded ? "Collapse entity" : "Expand entity"}
+      aria-label={entity.expanded ? "Collapse entity" : "Expand entity"}
     >
-      {isEntityExpanded ? "collapse" : "expand"}
+      {entity.expanded ? "collapse" : "expand"}
     </button>
   </div>
 
   <!-- Attributes -->
-  {#if isEntityExpanded}
+  {#if entity.expanded}
     <div class="entity-attributes">
       {#each entity.attributes as attr, index}
         <div
