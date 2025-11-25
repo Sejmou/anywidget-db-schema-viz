@@ -5,14 +5,20 @@ build-backend = "hatchling.build"
 [project]
 name = "db-schema-viz"
 version = "0.0.0"
-dependencies = ["anywidget"]
+dependencies = [
+    "anywidget",
+    "pydantic>=2.12.4",
+]
 readme = "README.md"
 requires-python=">=3.9"
+
+[project.optional-dependencies]
+duckdb = ["duckdb>=1.0"]
 
 # Dependency groups (recognized by `uv`). For more details, visit:
 # https://peps.python.org/pep-0735/
 [dependency-groups]
-dev = ["watchfiles", "jupyterlab", "marimo"]
+dev = ["watchfiles", "jupyterlab", "marimo", "duckdb"]
 
 
 [tool.hatch.build]

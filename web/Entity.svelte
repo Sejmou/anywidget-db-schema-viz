@@ -1,6 +1,6 @@
 <script>
   /** @type {{ 
-    entity: { name: string, attributes: Array<{ name: string, datatype: string, primaryKey?: boolean, foreignKey?: { entity: string, attribute: string } }> },
+    entity: { name: string, attributes: Array<{ name: string, datatype: string, primary_key?: boolean, foreign_key?: { entity: string, attribute: string } }> },
     x: number,
     y: number,
     onDragStart: (event: MouseEvent) => void,
@@ -42,13 +42,13 @@
           </span>
         </div>
         <div class="flex items-center gap-1">
-          {#if attr.primaryKey}
+          {#if attr.primary_key}
             <span
               class="badge bg-yellow-400 text-yellow-900 text-xs px-2 py-0.5 rounded font-semibold"
               >PK</span
             >
           {/if}
-          {#if attr.foreignKey}
+          {#if attr.foreign_key}
             <span
               class="badge bg-green-400 text-green-900 text-xs px-2 py-0.5 rounded font-semibold"
               >FK</span

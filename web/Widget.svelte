@@ -176,22 +176,22 @@
 
     entities.forEach((entity) => {
       entity.attributes.forEach((attr, attrIndex) => {
-        if (attr.foreignKey) {
+        if (attr.foreign_key) {
           // Find the target attribute index
           const targetEntity = entities.find(
-            (e) => e.name === attr.foreignKey.entity,
+            (e) => e.name === attr.foreign_key.entity,
           );
           const targetAttrIndex =
             targetEntity?.attributes.findIndex(
-              (a) => a.name === attr.foreignKey.attribute,
+              (a) => a.name === attr.foreign_key.attribute,
             ) ?? -1;
 
           if (targetAttrIndex >= 0) {
             relationships.push({
               from: entity.name,
-              to: attr.foreignKey.entity,
+              to: attr.foreign_key.entity,
               fromAttr: attr.name,
-              toAttr: attr.foreignKey.attribute,
+              toAttr: attr.foreign_key.attribute,
               fromAttrIndex: attrIndex,
               toAttrIndex: targetAttrIndex,
             });
