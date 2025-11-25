@@ -4,13 +4,30 @@ build-backend = "hatchling.build"
 
 [project]
 name = "db-schema-viz"
-version = "0.0.0"
+version = "0.1.0"
+description = "Interactive database schema visualization utils for Python notebooks (Jupyter, Marimo)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Samo Kolter", email = "samo.kolter@gmail.com" },
+]
+keywords = ["jupyter", "marimo", "widget", "database", "schema", "visualization", "er-diagram", ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Jupyter",
+]
 dependencies = [
     "anywidget",
-    "pydantic>=2.12.4",
+    "pydantic>=2",
 ]
-readme = "README.md"
-requires-python=">=3.9"
 
 [project.optional-dependencies]
 duckdb = ["duckdb>=1.0"]
