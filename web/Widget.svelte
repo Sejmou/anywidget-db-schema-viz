@@ -1,15 +1,22 @@
-<script>
+<script lang="ts">
   import "./widget.css";
-  import Entity from "./Entity.svelte";
+  import EntityComponent from "./Entity.svelte";
+  import type { Entity, Attribute } from "./types";
 
-  /** @type {{ bindings: { entities: Array<any>, width: number, height: number, show_datatypes: boolean, datatype_truncate_length: number } }}*/
-  let { bindings } = $props();
+  interface Bindings {
+    entities: Array<Entity>;
+    width: number;
+    height: number;
+    show_datatypes: boolean;
+    datatype_truncate_length: number;
+  }
+  const { bindings }: { bindings: Bindings } = $props();
 
   // Entity positions (x, y coordinates)
   let entityPositions = $state(new Map());
 
   // Drag state
-  let draggedEntity = $state(null);
+  let draggedEntity = $state<string | null>(null);
   let dragOffset = $state({ x: 0, y: 0 });
   let isDragging = $state(false);
   let dragStartPos = $state({ x: 0, y: 0 });
@@ -21,8 +28,8 @@
   let nextLayerIndex = $state(10); // Start at 10, increment for each selection
 
   // Container and canvas dimensions
-  let containerRef = $state(null);
-  let canvasRef = $state(null);
+  let containerRef = $state<HTMLElement | null>(null);
+  let canvasRef = $state<HTMLElement | null>(null);
   let measuredWidth = $state(1000);
 
   // Use explicit width if provided (> 0), otherwise use measured parent width
@@ -88,7 +95,7 @@
   });
 
   // Auto-layout: arrange entities in a circular or grid pattern
-  function autoLayout(entities) {
+  function autoLayout(entities: Array<Entity>) {
     const positions = new Map();
     const centerX = containerWidth / 2;
     const centerY = containerHeight / 2;
@@ -109,19 +116,19 @@
   }
 
   // Get entity position
-  function getEntityPosition(entityName) {
+  function getEntityPosition(entityName: string) {
     return entityPositions.get(entityName) || { x: 100, y: 100 };
   }
 
   // Set entity position
-  function setEntityPosition(entityName, x, y) {
+  function setEntityPosition(entityName: string, x: number, y: number) {
     const newPositions = new Map(entityPositions);
     newPositions.set(entityName, { x, y });
     entityPositions = newPositions;
   }
 
   // Handle entity selection - move to top layer
-  function handleEntityClick(entityName) {
+  function handleEntityClick(entityName: string) {
     const newLayers = new Map(entityLayers);
     newLayers.set(entityName, nextLayerIndex);
     entityLayers = newLayers;
@@ -129,12 +136,12 @@
   }
 
   // Get layer index for an entity (defaults to 0 if not set)
-  function getEntityLayer(entityName) {
+  function getEntityLayer(entityName: string) {
     return entityLayers.get(entityName) ?? 0;
   }
 
   // Drag handlers
-  function handleDragStart(entityName, event) {
+  function handleDragStart(entityName: string, event: MouseEvent) {
     if (!canvasRef) return;
 
     const pos = getEntityPosition(entityName);
@@ -148,7 +155,7 @@
     dragStartPos = { x: event.clientX, y: event.clientY };
     isDragging = false; // Will be set to true if mouse moves beyond threshold
 
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       if (draggedEntity && canvasRef) {
         // Check if mouse moved beyond threshold to consider it a drag
         const dx = Math.abs(e.clientX - dragStartPos.x);
@@ -200,7 +207,11 @@
 
   // Get connection points for relationship lines
   // Returns the position at the attribute row where the line should connect
-  function getConnectionPoint(entityName, attributeIndex, isSource) {
+  function getConnectionPoint(
+    entityName: string,
+    attributeIndex: number,
+    isSource: boolean,
+  ) {
     const pos = getEntityPosition(entityName);
     const entity = bindings.entities?.find((e) => e.name === entityName);
 
@@ -228,26 +239,34 @@
   // Find all relationships
   function getRelationships() {
     const entities = bindings.entities || [];
-    const relationships = [];
+    const relationships: Array<{
+      from: string;
+      to: string;
+      fromAttr: string;
+      toAttr: string;
+      fromAttrIndex: number;
+      toAttrIndex: number;
+    }> = [];
 
     entities.forEach((entity) => {
-      entity.attributes.forEach((attr, attrIndex) => {
+      entity.attributes.forEach((attr: Attribute, attrIndex: number) => {
         if (attr.foreign_key) {
+          const foreignKey = attr.foreign_key;
           // Find the target attribute index
           const targetEntity = entities.find(
-            (e) => e.name === attr.foreign_key.entity,
+            (e) => e.name === foreignKey.entity,
           );
           const targetAttrIndex =
             targetEntity?.attributes.findIndex(
-              (a) => a.name === attr.foreign_key.attribute,
+              (a) => a.name === foreignKey.attribute,
             ) ?? -1;
 
           if (targetAttrIndex >= 0) {
             relationships.push({
               from: entity.name,
-              to: attr.foreign_key.entity,
+              to: foreignKey.entity,
               fromAttr: attr.name,
-              toAttr: attr.foreign_key.attribute,
+              toAttr: foreignKey.attribute,
               fromAttrIndex: attrIndex,
               toAttrIndex: targetAttrIndex,
             });
@@ -316,7 +335,7 @@
       {#each getEntities() as entity}
         {@const pos = getEntityPosition(entity.name)}
         {@const layer = getEntityLayer(entity.name)}
-        <Entity
+        <EntityComponent
           {entity}
           x={pos.x}
           y={pos.y}

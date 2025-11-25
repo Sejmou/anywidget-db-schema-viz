@@ -1,18 +1,27 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import { formatDatatype } from "./utils.js";
-  /** @type {{ 
-    entity: { name: string, attributes: Array<{ name: string, datatype: string, primary_key?: boolean, foreign_key?: { entity: string, attribute: string } }> },
-    x: number,
-    y: number,
-    layer: number,
-    showDatatypes: boolean,
-    truncateLength: number,
-    onDragStart: (event: MouseEvent) => void,
-    onDrag: (event: MouseEvent) => void,
-    onDragEnd: () => void,
-    onClick: (event: MouseEvent) => void
-  }}*/
+  interface Entity {
+    name: string;
+    attributes: Array<{
+      name: string;
+      datatype: string;
+      primary_key?: boolean;
+      foreign_key?: { entity: string; attribute: string };
+    }>;
+  }
+  interface Props {
+    entity: Entity;
+    x: number;
+    y: number;
+    layer: number;
+    showDatatypes: boolean;
+    truncateLength: number;
+    onDragStart: (event: MouseEvent) => void;
+    onDrag: (event: MouseEvent) => void;
+    onDragEnd: () => void;
+    onClick: (event: MouseEvent) => void;
+  }
   let {
     entity,
     x,
@@ -24,14 +33,11 @@
     onDrag,
     onDragEnd,
     onClick,
-  } = $props();
+  }: Props = $props();
   let expandedAttrs = $state(new Set());
   let isEntityExpanded = $state(true);
 
-  /**
-   * @param {MouseEvent} event
-   */
-  function toggleEntityExpand(event) {
+  function toggleEntityExpand(event: MouseEvent) {
     event.stopPropagation();
     isEntityExpanded = !isEntityExpanded;
   }
@@ -42,7 +48,7 @@
    * @param {number} index
    * @param {MouseEvent} event
    */
-  function toggleExpand(index, event) {
+  function toggleExpand(index: number, event: MouseEvent) {
     event.stopPropagation();
     if (expandedAttrs.has(index)) {
       expandedAttrs.delete(index);
@@ -53,19 +59,11 @@
     expandedAttrs = new Set(expandedAttrs);
   }
 
-  /**
-   * @param {string} datatype
-   * @returns {boolean}
-   */
-  function shouldTruncate(datatype) {
+  function shouldTruncate(datatype: string): boolean {
     return datatype.length > truncateLength;
   }
 
-  /**
-   * @param {string} datatype
-   * @returns {string}
-   */
-  function truncate(datatype) {
+  function truncate(datatype: string): string {
     return datatype.substring(0, truncateLength) + "...";
   }
 </script>
@@ -81,10 +79,8 @@
     onClick(e);
   }}
   onkeydown={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onClick(e);
-    }
+    // TODO: implement keyboard navigation
+    e.preventDefault();
   }}
   role="button"
   tabindex="0"

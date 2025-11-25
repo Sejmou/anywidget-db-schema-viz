@@ -1,8 +1,4 @@
-/**
-   * @param {string} datatype
-   * @returns {string}
-   */
-function formatDatatype(datatype) {
+function formatDatatype(datatype: string): string {
     // Format nested structures with proper indentation for better readability
     let result = "";
     let indentLevel = 0;

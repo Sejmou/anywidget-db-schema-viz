@@ -21,6 +21,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.1.17
         version: 4.1.17
+      '@tsconfig/svelte':
+        specifier: ^5.0.6
+        version: 5.0.6
       rolldown:
         specifier: 1.0.0-beta.10
         version: 1.0.0-beta.10
@@ -32,10 +35,13 @@ importers:
         version: 7.2.3(rollup@4.53.3)(svelte@5.43.14)
       svelte-preprocess:
         specifier: ^6.0.3
-        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)(svelte@5.43.14)
+        version: 6.0.3(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)(svelte@5.43.14)(typescript@5.9.3)
       tailwindcss:
         specifier: ^4.1.17
         version: 4.1.17
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
 packages:
 
@@ -359,6 +365,9 @@ packages:
   '@trysound/sax@0.2.0':
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
     engines: {node: '>=10.13.0'}
+
+  '@tsconfig/svelte@5.0.6':
+    resolution: {integrity: sha512-yGxYL0I9eETH1/DR9qVJey4DAsCdeau4a9wYPKuXfEhm8lFO8wg+LLYJjIpAm6Fw7HSlhepPhYPDop75485yWQ==}
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -1057,6 +1066,11 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   update-browserslist-db@1.1.4:
     resolution: {integrity: sha512-q0SPT4xyU84saUX+tomz1WLkxUbuaJnR1xWt17M7fJtEJigJeWUNGUqrauFXsHnqev9y9JTRGwk13tFBuKby4A==}
     hasBin: true
@@ -1315,6 +1329,8 @@ snapshots:
       tailwindcss: 4.1.17
 
   '@trysound/sax@0.2.0': {}
+
+  '@tsconfig/svelte@5.0.6': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
@@ -1946,12 +1962,13 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)(svelte@5.43.14):
+  svelte-preprocess@6.0.3(postcss-load-config@3.1.4(postcss@8.5.6))(postcss@8.5.6)(svelte@5.43.14)(typescript@5.9.3):
     dependencies:
       svelte: 5.43.14
     optionalDependencies:
       postcss: 8.5.6
       postcss-load-config: 3.1.4(postcss@8.5.6)
+      typescript: 5.9.3
 
   svelte@5.43.14:
     dependencies:
@@ -1986,6 +2003,8 @@ snapshots:
 
   tslib@2.8.1:
     optional: true
+
+  typescript@5.9.3: {}
 
   update-browserslist-db@1.1.4(browserslist@4.28.0):
     dependencies:
