@@ -16,7 +16,7 @@ export default defineConfig({
     }),
     svelte({
       preprocess: sveltePreprocess(),
-      compilerOptions: { runes: true }
+      compilerOptions: { runes: true, dev: process.env.NODE_ENV === "development" }
     }),
   ],
 });
