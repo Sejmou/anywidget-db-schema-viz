@@ -2,7 +2,7 @@
   import "./widget.css";
   import Entity from "./Entity.svelte";
 
-  /** @type {{ bindings: { entities: Array<any>, width: number, height: number } }}*/
+  /** @type {{ bindings: { entities: Array<any>, width: number, height: number, show_datatypes: boolean, datatype_truncate_length: number } }}*/
   let { bindings } = $props();
 
   // Entity positions (x, y coordinates)
@@ -12,6 +12,13 @@
   let draggedEntity = $state(null);
   let dragOffset = $state({ x: 0, y: 0 });
   let isDragging = $state(false);
+  let dragStartPos = $state({ x: 0, y: 0 });
+  const DRAG_THRESHOLD = 5; // pixels
+
+  // Layer system: tracks the layer index for each entity
+  // Higher layer index = rendered on top
+  let entityLayers = $state(new Map());
+  let nextLayerIndex = $state(10); // Start at 10, increment for each selection
 
   // Container and canvas dimensions
   let containerRef = $state(null);
@@ -68,6 +75,14 @@
         ![...currentEntityNames].every((name) => newEntityNames.has(name))
       ) {
         autoLayout(entities);
+        // Initialize layers for new entities (keep existing layer indices)
+        const newLayers = new Map(entityLayers);
+        entities.forEach((entity, i) => {
+          if (!newLayers.has(entity.name)) {
+            newLayers.set(entity.name, i); // Base layer for unselected entities
+          }
+        });
+        entityLayers = newLayers;
       }
     }
   });
@@ -105,6 +120,19 @@
     entityPositions = newPositions;
   }
 
+  // Handle entity selection - move to top layer
+  function handleEntityClick(entityName) {
+    const newLayers = new Map(entityLayers);
+    newLayers.set(entityName, nextLayerIndex);
+    entityLayers = newLayers;
+    nextLayerIndex += 1;
+  }
+
+  // Get layer index for an entity (defaults to 0 if not set)
+  function getEntityLayer(entityName) {
+    return entityLayers.get(entityName) ?? 0;
+  }
+
   // Drag handlers
   function handleDragStart(entityName, event) {
     if (!canvasRef) return;
@@ -117,21 +145,49 @@
       x: event.clientX - rect.left - pos.x,
       y: event.clientY - rect.top - pos.y,
     };
-    isDragging = true;
+    dragStartPos = { x: event.clientX, y: event.clientY };
+    isDragging = false; // Will be set to true if mouse moves beyond threshold
 
     const handleMouseMove = (e) => {
       if (draggedEntity && canvasRef) {
-        const rect = canvasRef.getBoundingClientRect();
-        const newX = e.clientX - rect.left - dragOffset.x;
-        const newY = e.clientY - rect.top - dragOffset.y;
-        // Constrain to container bounds (with some padding)
-        const constrainedX = Math.max(0, Math.min(newX, containerWidth - 200));
-        const constrainedY = Math.max(0, Math.min(newY, containerHeight - 100));
-        setEntityPosition(draggedEntity, constrainedX, constrainedY);
+        // Check if mouse moved beyond threshold to consider it a drag
+        const dx = Math.abs(e.clientX - dragStartPos.x);
+        const dy = Math.abs(e.clientY - dragStartPos.y);
+        if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+          isDragging = true;
+          // Move dragged entity to top layer
+          const newLayers = new Map(entityLayers);
+          newLayers.set(draggedEntity, nextLayerIndex);
+          entityLayers = newLayers;
+          nextLayerIndex += 1;
+        }
+
+        if (isDragging) {
+          const rect = canvasRef.getBoundingClientRect();
+          const newX = e.clientX - rect.left - dragOffset.x;
+          const newY = e.clientY - rect.top - dragOffset.y;
+          // Constrain to container bounds (with some padding)
+          const constrainedX = Math.max(
+            0,
+            Math.min(newX, containerWidth - 200),
+          );
+          const constrainedY = Math.max(
+            0,
+            Math.min(newY, containerHeight - 100),
+          );
+          setEntityPosition(draggedEntity, constrainedX, constrainedY);
+        }
       }
     };
 
     const handleMouseUp = () => {
+      // If it was a click (not a drag), move entity to top layer
+      if (draggedEntity && !isDragging) {
+        const newLayers = new Map(entityLayers);
+        newLayers.set(draggedEntity, nextLayerIndex);
+        entityLayers = newLayers;
+        nextLayerIndex += 1;
+      }
       isDragging = false;
       draggedEntity = null;
       document.removeEventListener("mousemove", handleMouseMove);
@@ -203,9 +259,15 @@
     return relationships;
   }
 
-  // Get all entities
+  // Get all entities sorted by layer (lowest layer first, so highest renders on top)
   function getEntities() {
-    return bindings.entities || [];
+    const entities = bindings.entities || [];
+    // Sort by layer index (ascending) so entities with higher layers render last (on top)
+    return [...entities].sort((a, b) => {
+      const layerA = getEntityLayer(a.name);
+      const layerB = getEntityLayer(b.name);
+      return layerA - layerB;
+    });
   }
 </script>
 
@@ -253,13 +315,20 @@
     <div class="entities-container relative z-10">
       {#each getEntities() as entity}
         {@const pos = getEntityPosition(entity.name)}
+        {@const layer = getEntityLayer(entity.name)}
         <Entity
           {entity}
           x={pos.x}
           y={pos.y}
+          {layer}
+          showDatatypes={bindings.show_datatypes ?? true}
+          truncateLength={bindings.datatype_truncate_length !== undefined
+            ? bindings.datatype_truncate_length
+            : 30}
           onDragStart={(e) => handleDragStart(entity.name, e)}
           onDrag={() => {}}
           onDragEnd={() => {}}
+          onClick={() => handleEntityClick(entity.name)}
         />
       {/each}
     </div>
