@@ -13,11 +13,46 @@
   let dragOffset = $state({ x: 0, y: 0 });
   let isDragging = $state(false);
 
-  // Container and canvas dimensions from bindings (reactive)
-  const containerWidth = $derived(bindings.width ?? 1000);
+  // Container and canvas dimensions
+  let containerRef = $state(null);
+  let canvasRef = $state(null);
+  let measuredWidth = $state(1000);
+
+  // Use explicit width if provided (> 0), otherwise use measured parent width
+  const containerWidth = $derived(
+    bindings.width && bindings.width > 0 ? bindings.width : measuredWidth,
+  );
   const containerHeight = $derived(bindings.height ?? 700);
 
-  let canvasRef = $state(null);
+  // Measure parent container width using ResizeObserver
+  $effect(() => {
+    if (!containerRef) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 0) {
+          measuredWidth = width;
+        }
+      }
+    });
+
+    // Observe the parent element
+    const parent = containerRef.parentElement;
+    if (parent) {
+      resizeObserver.observe(parent);
+
+      // Initial measurement
+      const initialWidth = parent.getBoundingClientRect().width;
+      if (initialWidth > 0) {
+        measuredWidth = initialWidth;
+      }
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  });
 
   // Initialize positions when entities change
   $effect(() => {
@@ -175,19 +210,17 @@
 </script>
 
 <div
-  class="relative bg-gray-50 font-sans border border-gray-300 rounded-lg"
-  style="width: {containerWidth}px; height: {containerHeight}px;"
+  bind:this={containerRef}
+  class="relative bg-gray-50 font-sans border border-gray-300 rounded-lg w-full"
+  style="height: {containerHeight}px;"
 >
   <div
     bind:this={canvasRef}
-    class="relative"
-    style="width: {containerWidth}px; height: {containerHeight}px;"
+    class="relative w-full"
+    style="height: {containerHeight}px;"
   >
     <!-- SVG overlay for relationship lines -->
-    <svg
-      class="absolute inset-0 pointer-events-none z-0"
-      style="width: {containerWidth}px; height: {containerHeight}px;"
-    >
+    <svg class="absolute inset-0 pointer-events-none z-0 w-full h-full">
       {#each getRelationships() as rel}
         {@const fromPos = getConnectionPoint(rel.from, rel.fromAttrIndex, true)}
         {@const toPos = getConnectionPoint(rel.to, rel.toAttrIndex, false)}
