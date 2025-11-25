@@ -1,11 +1,242 @@
 <script>
-  // import CSS file w/ tailwind directive; without this the tailwind CSS classes won't be processed and no styles will be applied
   import "./widget.css";
+  import Entity from "./Entity.svelte";
 
-  /** @type {{ bindings: { value: number }}*/
+  /** @type {{ bindings: { entities: Array<any>, width: number, height: number } }}*/
   let { bindings } = $props();
+
+  // Entity positions (x, y coordinates)
+  let entityPositions = $state(new Map());
+
+  // Drag state
+  let draggedEntity = $state(null);
+  let dragOffset = $state({ x: 0, y: 0 });
+  let isDragging = $state(false);
+
+  // Container and canvas dimensions from bindings (reactive)
+  const containerWidth = $derived(bindings.width ?? 1000);
+  const containerHeight = $derived(bindings.height ?? 700);
+
+  let canvasRef = $state(null);
+
+  // Initialize positions when entities change
+  $effect(() => {
+    const entities = bindings.entities || [];
+    if (entities.length > 0) {
+      // Check if we need to initialize positions for new entities
+      const currentEntityNames = new Set(Array.from(entityPositions.keys()));
+      const newEntityNames = new Set(entities.map((e) => e.name));
+
+      // If entities changed, reset and re-layout
+      if (
+        currentEntityNames.size !== newEntityNames.size ||
+        ![...currentEntityNames].every((name) => newEntityNames.has(name))
+      ) {
+        autoLayout(entities);
+      }
+    }
+  });
+
+  // Auto-layout: arrange entities in a circular or grid pattern
+  function autoLayout(entities) {
+    const positions = new Map();
+    const centerX = containerWidth / 2;
+    const centerY = containerHeight / 2;
+    const radius = Math.min(containerWidth, containerHeight) / 3;
+
+    if (entities.length === 1) {
+      positions.set(entities[0].name, { x: centerX - 100, y: centerY - 100 });
+    } else {
+      entities.forEach((entity, index) => {
+        const angle = (2 * Math.PI * index) / entities.length;
+        const x = centerX + radius * Math.cos(angle) - 100;
+        const y = centerY + radius * Math.sin(angle) - 100;
+        positions.set(entity.name, { x, y });
+      });
+    }
+
+    entityPositions = positions;
+  }
+
+  // Get entity position
+  function getEntityPosition(entityName) {
+    return entityPositions.get(entityName) || { x: 100, y: 100 };
+  }
+
+  // Set entity position
+  function setEntityPosition(entityName, x, y) {
+    const newPositions = new Map(entityPositions);
+    newPositions.set(entityName, { x, y });
+    entityPositions = newPositions;
+  }
+
+  // Drag handlers
+  function handleDragStart(entityName, event) {
+    if (!canvasRef) return;
+
+    const pos = getEntityPosition(entityName);
+    const rect = canvasRef.getBoundingClientRect();
+
+    draggedEntity = entityName;
+    dragOffset = {
+      x: event.clientX - rect.left - pos.x,
+      y: event.clientY - rect.top - pos.y,
+    };
+    isDragging = true;
+
+    const handleMouseMove = (e) => {
+      if (draggedEntity && canvasRef) {
+        const rect = canvasRef.getBoundingClientRect();
+        const newX = e.clientX - rect.left - dragOffset.x;
+        const newY = e.clientY - rect.top - dragOffset.y;
+        // Constrain to container bounds (with some padding)
+        const constrainedX = Math.max(0, Math.min(newX, containerWidth - 200));
+        const constrainedY = Math.max(0, Math.min(newY, containerHeight - 100));
+        setEntityPosition(draggedEntity, constrainedX, constrainedY);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+      draggedEntity = null;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }
+
+  // Get connection points for relationship lines
+  // Returns the position at the attribute row where the line should connect
+  function getConnectionPoint(entityName, attributeIndex, isSource) {
+    const pos = getEntityPosition(entityName);
+    const entity = bindings.entities?.find((e) => e.name === entityName);
+
+    if (!entity) return { x: pos.x, y: pos.y };
+
+    // Entity box dimensions
+    const boxWidth = 200;
+    const headerHeight = 40;
+    const attributeRowHeight = 40;
+
+    // Calculate Y position: header + attribute index * row height + center of row
+    const y =
+      pos.y +
+      headerHeight +
+      attributeIndex * attributeRowHeight +
+      attributeRowHeight / 2;
+
+    // For source (FK), line starts from right edge
+    // For target (PK), line ends at left edge
+    const x = isSource ? pos.x + boxWidth : pos.x;
+
+    return { x, y };
+  }
+
+  // Find all relationships
+  function getRelationships() {
+    const entities = bindings.entities || [];
+    const relationships = [];
+
+    entities.forEach((entity) => {
+      entity.attributes.forEach((attr, attrIndex) => {
+        if (attr.foreignKey) {
+          // Find the target attribute index
+          const targetEntity = entities.find(
+            (e) => e.name === attr.foreignKey.entity,
+          );
+          const targetAttrIndex =
+            targetEntity?.attributes.findIndex(
+              (a) => a.name === attr.foreignKey.attribute,
+            ) ?? -1;
+
+          if (targetAttrIndex >= 0) {
+            relationships.push({
+              from: entity.name,
+              to: attr.foreignKey.entity,
+              fromAttr: attr.name,
+              toAttr: attr.foreignKey.attribute,
+              fromAttrIndex: attrIndex,
+              toAttrIndex: targetAttrIndex,
+            });
+          }
+        }
+      });
+    });
+
+    return relationships;
+  }
+
+  // Get all entities
+  function getEntities() {
+    return bindings.entities || [];
+  }
 </script>
 
-<button class="bg-gray-500 p-2 rounded-md" onclick={() => bindings.value++}
-  >Count is {bindings.value}</button
+<div
+  class="relative bg-gray-50 font-sans border border-gray-300 rounded-lg"
+  style="width: {containerWidth}px; height: {containerHeight}px;"
 >
+  <div
+    bind:this={canvasRef}
+    class="relative"
+    style="width: {containerWidth}px; height: {containerHeight}px;"
+  >
+    <!-- SVG overlay for relationship lines -->
+    <svg
+      class="absolute inset-0 pointer-events-none z-0"
+      style="width: {containerWidth}px; height: {containerHeight}px;"
+    >
+      {#each getRelationships() as rel}
+        {@const fromPos = getConnectionPoint(rel.from, rel.fromAttrIndex, true)}
+        {@const toPos = getConnectionPoint(rel.to, rel.toAttrIndex, false)}
+        <line
+          x1={fromPos.x}
+          y1={fromPos.y}
+          x2={toPos.x}
+          y2={toPos.y}
+          stroke="#4B5563"
+          stroke-width="2"
+          marker-end="url(#arrowhead)"
+        />
+      {/each}
+      <!-- Arrow marker definition -->
+      <defs>
+        <marker
+          id="arrowhead"
+          markerWidth="10"
+          markerHeight="10"
+          refX="9"
+          refY="3"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3, 0 6" fill="#4B5563" />
+        </marker>
+      </defs>
+    </svg>
+
+    <!-- Entity components -->
+    <div class="entities-container relative z-10">
+      {#each getEntities() as entity}
+        {@const pos = getEntityPosition(entity.name)}
+        <Entity
+          {entity}
+          x={pos.x}
+          y={pos.y}
+          onDragStart={(e) => handleDragStart(entity.name, e)}
+          onDrag={() => {}}
+          onDragEnd={() => {}}
+        />
+      {/each}
+    </div>
+  </div>
+
+  <!-- Auto-layout button -->
+  <button
+    class="absolute bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors z-20"
+    onclick={() => autoLayout(getEntities())}
+  >
+    Auto Layout
+  </button>
+</div>
