@@ -1,26 +1,30 @@
 <script lang="ts">
   import "./widget.css";
   import EntityComponent from "./Entity.svelte";
-  import type { Entity, Attribute, EntityWithRenderingState } from "./types";
+  import type { Entity, EntityWithRenderingState } from "./types";
 
   interface Bindings {
-    entities: Array<Entity>;
+    entities: Record<string, Entity>;
     width: number;
     height: number;
     show_datatypes: boolean;
     datatype_truncate_length: number;
   }
   const { bindings }: { bindings: Bindings } = $props();
-
-  // Single array of entities with their state (position and layer)
-  let entitiesWithState = $state<Array<EntityWithRenderingState>>(
-    bindings.entities.map((entity, i) => ({
-      ...entity,
-      x: 100 * i,
-      y: 100 * i,
-      layer: i,
-      expanded: true,
-    })),
+  // TODO: understand why using $derived (which sounds more natural/correct) breaks things
+  const entitiesWithState = $state(
+    Object.fromEntries(
+      Object.values(bindings.entities).map((entity, i) => [
+        entity.name,
+        {
+          ...entity,
+          x: 100 * i,
+          y: 100 * i,
+          layer: i,
+          expanded: true,
+        },
+      ]),
+    ),
   );
 
   // Drag state
@@ -72,8 +76,10 @@
 
   function moveEntityToTop(entity: EntityWithRenderingState) {
     // Move dragged entity to top layer
-    const maxLayer = Math.max(...entitiesWithState.map((e) => e.layer));
-    const entitiesAbove = entitiesWithState.filter(
+    const maxLayer = Math.max(
+      ...Object.values(entitiesWithState).map((e) => e.layer),
+    );
+    const entitiesAbove = Object.values(entitiesWithState).filter(
       (e) => e.layer > entity.layer,
     );
     entity.layer = maxLayer;
@@ -169,8 +175,9 @@
   const relationships = $derived(getRelationships(entitiesWithState));
 
   // Find all relationships
-  function getRelationships(entities: Array<EntityWithRenderingState>) {
-    console.log("getting relationships", entities);
+  function getRelationships(
+    entities: Record<string, EntityWithRenderingState>,
+  ) {
     const relationships: Array<{
       from: EntityWithRenderingState;
       to: EntityWithRenderingState;
@@ -178,28 +185,19 @@
       toAttr: string;
     }> = [];
 
-    entities.forEach((entity) => {
-      entity.attributes.forEach((attr: Attribute) => {
+    Object.values(entities).forEach((entity) => {
+      entity.attributes.forEach((attr) => {
         if (attr.foreign_key) {
           const foreignKey = attr.foreign_key;
           // Find the target attribute index
-          const targetEntity = entities.find(
-            (e) => e.name === foreignKey.entity,
-          );
+          const targetEntity = entities[foreignKey.entity];
           if (!targetEntity) return;
-          const targetAttrIndex =
-            targetEntity?.attributes.findIndex(
-              (a) => a.name === foreignKey.attribute,
-            ) ?? -1;
-
-          if (targetAttrIndex >= 0) {
-            relationships.push({
-              from: entity,
-              to: targetEntity,
-              fromAttr: attr.name,
-              toAttr: foreignKey.attribute,
-            });
-          }
+          relationships.push({
+            from: entity,
+            to: targetEntity,
+            fromAttr: attr.name,
+            toAttr: foreignKey.attribute,
+          });
         }
       });
     });
@@ -250,7 +248,7 @@
 
     <!-- Entity components -->
     <div class="entities-container relative z-10">
-      {#each entitiesWithState as entity}
+      {#each Object.values(entitiesWithState) as entity}
         <EntityComponent
           {entity}
           showDatatypes={bindings.show_datatypes ?? true}

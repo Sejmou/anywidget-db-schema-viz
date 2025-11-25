@@ -5,5 +5,10 @@
     ],
     "exclude": [
         "node_modules/*"
-    ]
+    ],
+    "compilerOptions": {
+        "lib": [
+            "ES2022"
+        ]
+    }
 }

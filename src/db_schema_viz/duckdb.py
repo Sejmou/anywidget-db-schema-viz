@@ -3,7 +3,9 @@ from typing import Any
 from .types import Entity
 
 
-def get_tables(conn: DuckDBPyConnection) -> list[dict[str, Any]]:
+def get_tables(conn: DuckDBPyConnection) -> dict[str, dict[str, Any]]:
+    # TODO: construct a query that is less of a mindfuck than the stuff here lol
+
     # Get columns info with relevant fields
     columns = conn.execute(
         """
@@ -49,7 +51,7 @@ def get_tables(conn: DuckDBPyConnection) -> list[dict[str, Any]]:
             attr["foreign_key"] = fk_map[table][column]
         tables[table]["attributes"].append(attr)
 
-    return [
-        Entity.model_validate(table).model_dump(mode="json")
+    return {
+        table["name"]: Entity.model_validate(table).model_dump(mode="json")
         for table in tables.values()
-    ]
+    }
